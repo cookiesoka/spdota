@@ -1,0 +1,14 @@
+{
+  "name": "sp_dota",
+  "version": "0.1.0",
+  "description": "sp_dota — Payroll Wars. Dota 2 Mechaniken trifft Zeiterfassung & Payroll.",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=dist/main.js --sourcemap",
+    "watch": "esbuild src/main.ts --bundle --outfile=dist/main.js --sourcemap --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "esbuild": "^0.21.0"
+  }
+}
