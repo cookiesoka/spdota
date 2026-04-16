@@ -68,11 +68,11 @@ export function renderHUD(ctx: CanvasRenderingContext2D, state: GameState): void
     ctx.fillText("MAX", CANVAS_W / 2, 28);
   }
 
-  // Welle (rechts)
+  // Welle + Akt (rechts)
   ctx.fillStyle = COL.text;
   ctx.textAlign = "right";
   ctx.font = "13px monospace";
-  const waveText = `Welle ${state.wave.waveNumber}`;
+  const waveText = `Akt ${state.stage}/6  •  Welle ${state.wave.waveNumber}`;
   ctx.fillText(waveText, CANVAS_W - 120, 12);
   ctx.fillStyle = COL.dimText;
   ctx.font = "11px monospace";

@@ -69,6 +69,8 @@ export function createGameState(canvas: HTMLCanvasElement, ctx: CanvasRenderingC
     logoImage:  null,
     respawnTimer: 0,
     deathCount:   0,
+    stage:        1,
+    stageBannerTimer: 0,
   };
 
   // Event-Listener
@@ -99,6 +101,8 @@ export function resetForNewGame(state: GameState): void {
   state.phase          = GamePhase.InGame;
   state.respawnTimer   = 0;
   state.deathCount     = 0;
+  state.stage          = 1;
+  state.stageBannerTimer = 0;
 
   EventBus.clear();
   initEconomyListeners(state);
@@ -226,9 +230,39 @@ export function render(state: GameState): void {
     renderRespawnOverlay(ctx, state);
   }
 
+  // 10b. Akt-Banner
+  if (state.stageBannerTimer > 0) {
+    renderStageBanner(ctx, state);
+  }
+
   // 11. Victory/Defeat
   if (state.phase === GamePhase.Victory)  renderVictory(ctx, state);
   if (state.phase === GamePhase.Defeat)   renderDefeat(ctx, state);
+}
+
+function renderStageBanner(ctx: CanvasRenderingContext2D, state: GameState): void {
+  const t = state.stageBannerTimer;
+  const alpha = t > 4 ? (5 - t) : t > 1 ? 1 : t;   // ein/aus Fade
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, CANVAS_H / 2 - 80, CANVAS_W, 160);
+
+  ctx.fillStyle = "#FFD700";
+  ctx.font = "bold 42px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(`AKT ${state.stage} / 6`, CANVAS_W / 2, CANVAS_H / 2 - 10);
+
+  ctx.fillStyle = "#FF7043";
+  ctx.font = "bold 18px monospace";
+  ctx.fillText("Die Direktion verstärkt sich!", CANVAS_W / 2, CANVAS_H / 2 + 25);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "14px monospace";
+  ctx.fillText("Volles Leben + Akt-Bonus erhalten", CANVAS_W / 2, CANVAS_H / 2 + 55);
+
+  ctx.restore();
 }
 
 // ── Creep Render ──────────────────────────────────────────────────────────────

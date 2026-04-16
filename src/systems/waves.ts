@@ -60,7 +60,7 @@ function spawnOne(
   offset: Vec2,
   waveNumber: number
 ): void {
-  const creep = createCreep(team, variant, offset, waveNumber);
+  const creep = createCreep(team, variant, offset, waveNumber, state.stage);
   if (team === Team.Radiant) {
     state.radiantCreeps.push(creep);
   } else {

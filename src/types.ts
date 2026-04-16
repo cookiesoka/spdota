@@ -284,4 +284,6 @@ export interface GameState {
   logoImage:      HTMLImageElement | null;
   respawnTimer:   number;       // 0 = nicht am Respawnen, >0 = Countdown
   deathCount:     number;
+  stage:          number;       // Aktueller Akt (1 = Start, MAX_STAGE = Endgegner)
+  stageBannerTimer: number;     // Sek. wie lange der Akt-Banner noch sichtbar ist
 }

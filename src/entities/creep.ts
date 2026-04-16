@@ -19,10 +19,14 @@ export function createCreep(
   team: Team,
   variant: CreepVariant,
   startOffset: Vec2,
-  waveNumber: number
+  waveNumber: number,
+  stage: number = 1
 ): Creep {
-  const scale = 1 + waveNumber * 0.05;
-  const dmgScale = 1 + waveNumber * 0.04;
+  // Pro Akt werden Dire-Creeps deutlich stärker; Radiant-Creeps moderat
+  const stageMult    = team === Team.Dire ? 1 + (stage - 1) * 0.45 : 1 + (stage - 1) * 0.20;
+  const stageDmgMult = team === Team.Dire ? 1 + (stage - 1) * 0.35 : 1 + (stage - 1) * 0.15;
+  const scale = (1 + waveNumber * 0.05) * stageMult;
+  const dmgScale = (1 + waveNumber * 0.04) * stageDmgMult;
 
   const basePath = team === Team.Radiant ? RADIANT_PATH : DIRE_PATH;
   const spawnPos = { x: basePath[0].x + startOffset.x, y: basePath[0].y + startOffset.y };
@@ -61,8 +65,8 @@ export function createCreep(
       points:     basePath,
       currentIdx: 1,
     },
-    lohnBounty: Math.round(bounty),
-    xpBounty:   Math.round(bounty * 0.6),
+    lohnBounty: Math.round(bounty * stageMult),
+    xpBounty:   Math.round(bounty * 0.6 * stageMult),
     isLastHitWindow: false,
     slowTimer:  0,
     aggroCheckTimer: Math.random() * 0.5,

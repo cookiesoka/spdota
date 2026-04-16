@@ -523,9 +523,11 @@
   var ARRIVAL_THRESHOLD = 28;
   var AGGRO_RANGE = 260;
   var LEASH_RANGE = 400;
-  function createCreep(team, variant, startOffset, waveNumber) {
-    const scale = 1 + waveNumber * 0.05;
-    const dmgScale = 1 + waveNumber * 0.04;
+  function createCreep(team, variant, startOffset, waveNumber, stage = 1) {
+    const stageMult = team === "dire" /* Dire */ ? 1 + (stage - 1) * 0.45 : 1 + (stage - 1) * 0.2;
+    const stageDmgMult = team === "dire" /* Dire */ ? 1 + (stage - 1) * 0.35 : 1 + (stage - 1) * 0.15;
+    const scale = (1 + waveNumber * 0.05) * stageMult;
+    const dmgScale = (1 + waveNumber * 0.04) * stageDmgMult;
     const basePath = team === "radiant" /* Radiant */ ? RADIANT_PATH : DIRE_PATH;
     const spawnPos = { x: basePath[0].x + startOffset.x, y: basePath[0].y + startOffset.y };
     let hp = 420, dmg = 15, speed = 290, bounty = 40 + waveNumber * 2, radius = 16;
@@ -568,8 +570,8 @@
         points: basePath,
         currentIdx: 1
       },
-      lohnBounty: Math.round(bounty),
-      xpBounty: Math.round(bounty * 0.6),
+      lohnBounty: Math.round(bounty * stageMult),
+      xpBounty: Math.round(bounty * 0.6 * stageMult),
       isLastHitWindow: false,
       slowTimer: 0,
       aggroCheckTimer: Math.random() * 0.5
@@ -710,7 +712,7 @@
   }
 
   // src/entities/tower.ts
-  function makeTower(team, tier, label, pos, isAncient = false) {
+  function makeTower(team, tier, label, pos, isAncient = false, stage = 1) {
     const tierStats = {
       1: { hp: 1200, dmg: 55, range: 550, cd: 1.1, bounty: 150 },
       2: { hp: 1600, dmg: 75, range: 580, cd: 1.05, bounty: 200 },
@@ -718,19 +720,25 @@
       4: { hp: 4e3, dmg: 110, range: 620, cd: 0.95, bounty: 400 }
     };
     const s = tierStats[tier];
+    const hpMult = team === "dire" /* Dire */ ? 1 + (stage - 1) * 0.5 : 1;
+    const dmgMult = team === "dire" /* Dire */ ? 1 + (stage - 1) * 0.3 : 1;
+    const bountyMult = team === "dire" /* Dire */ ? 1 + (stage - 1) * 0.4 : 1;
+    const hp = Math.round(s.hp * hpMult);
+    const dmg = Math.round(s.dmg * dmgMult);
+    const bounty = Math.round(s.bounty * bountyMult);
     return {
       id: uniqueId(`tower_${team}_t${tier}`),
       type: isAncient ? "ancient" /* Ancient */ : "tower" /* Tower */,
       team,
       pos: { ...pos },
       radius: isAncient ? 55 : 38,
-      hp: s.hp,
-      maxHp: s.hp,
+      hp,
+      maxHp: hp,
       hpRegen: 0,
       alive: true,
       markedForDeletion: false,
       destroyed: false,
-      attackDamage: s.dmg,
+      attackDamage: dmg,
       attackRange: s.range,
       attackCooldown: s.cd,
       attackTimer: 0,
@@ -739,28 +747,37 @@
       armor: 8,
       tier,
       label,
-      lohnBounty: s.bounty,
-      xpBounty: Math.round(s.bounty * 0.5),
+      lohnBounty: bounty,
+      xpBounty: Math.round(bounty * 0.5),
       aggroCheckTimer: 0,
       attackFlashTimer: 0
     };
   }
-  function createAllTowers() {
+  function createAllTowers(stage = 1) {
     const p = TOWER_POSITIONS;
     return {
       radiantTowers: [
-        makeTower("radiant" /* Radiant */, 1, "HR-Abt. T1", p.radiant.t1),
-        makeTower("radiant" /* Radiant */, 2, "Finance T2", p.radiant.t2),
-        makeTower("radiant" /* Radiant */, 3, "IT-Kern T3", p.radiant.t3),
-        makeTower("radiant" /* Radiant */, 4, "Unternehmens-HQ", p.radiant.hq, true)
+        makeTower("radiant" /* Radiant */, 1, "HR-Abt. T1", p.radiant.t1, false, stage),
+        makeTower("radiant" /* Radiant */, 2, "Finance T2", p.radiant.t2, false, stage),
+        makeTower("radiant" /* Radiant */, 3, "IT-Kern T3", p.radiant.t3, false, stage),
+        makeTower("radiant" /* Radiant */, 4, "Unternehmens-HQ", p.radiant.hq, true, stage)
       ],
       direTowers: [
-        makeTower("dire" /* Dire */, 1, "Kontroll-T1", p.dire.t1),
-        makeTower("dire" /* Dire */, 2, "Chaos-T2", p.dire.t2),
-        makeTower("dire" /* Dire */, 3, "B\xFCrokratie-T3", p.dire.t3),
-        makeTower("dire" /* Dire */, 4, "Direktionszentrale", p.dire.ancient, true)
+        makeTower("dire" /* Dire */, 1, "Kontroll-T1", p.dire.t1, false, stage),
+        makeTower("dire" /* Dire */, 2, "Chaos-T2", p.dire.t2, false, stage),
+        makeTower("dire" /* Dire */, 3, "B\xFCrokratie-T3", p.dire.t3, false, stage),
+        makeTower("dire" /* Dire */, 4, "Direktionszentrale", p.dire.ancient, true, stage)
       ]
     };
+  }
+  function rebuildDireTowers(stage) {
+    const p = TOWER_POSITIONS;
+    return [
+      makeTower("dire" /* Dire */, 1, "Kontroll-T1", p.dire.t1, false, stage),
+      makeTower("dire" /* Dire */, 2, "Chaos-T2", p.dire.t2, false, stage),
+      makeTower("dire" /* Dire */, 3, "B\xFCrokratie-T3", p.dire.t3, false, stage),
+      makeTower("dire" /* Dire */, 4, "Direktionszentrale", p.dire.ancient, true, stage)
+    ];
   }
   function updateTowers(state2, dt) {
     for (const tower of state2.radiantTowers) updateSingleTower(tower, state2, dt);
@@ -1088,6 +1105,7 @@
   var RESPAWN_BASE_TIME = 5;
   var RESPAWN_PER_LEVEL = 2;
   var DEATH_GOLD_LOSS = 0.15;
+  var MAX_STAGE = 6;
   function initEconomyListeners(state2) {
     EventBus.on("LAST_HIT", (payload) => {
       const { lohn, xp } = payload;
@@ -1129,8 +1147,30 @@
       if (xpBounty > 0) addXp(state2, xpBounty);
     });
     EventBus.on("ANCIENT_DESTROYED", () => {
-      state2.phase = "victory" /* Victory */;
-      state2.victoryTime = state2.totalTime;
+      if (state2.stage >= MAX_STAGE) {
+        state2.phase = "victory" /* Victory */;
+        state2.victoryTime = state2.totalTime;
+        return;
+      }
+      state2.stage++;
+      state2.direTowers = rebuildDireTowers(state2.stage);
+      state2.direCreeps = [];
+      state2.projectiles = state2.projectiles.filter((p) => p.kind !== "tower_bolt" && p.kind !== "creep_ranged");
+      state2.wave.nextWaveTimer = 8;
+      state2.stageBannerTimer = 5;
+      state2.hero.hp = state2.hero.maxHp;
+      const stageReward = 500 * state2.stage;
+      state2.hero.lohn += stageReward;
+      state2.floatingTexts.push({
+        id: uniqueId("ft"),
+        pos: { x: state2.hero.pos.x, y: state2.hero.pos.y - 60 },
+        text: `+${stageReward} \u20B2 Akt-Bonus!`,
+        color: "#FFD700",
+        alpha: 1,
+        vy: -90,
+        life: 2.5,
+        size: 22
+      });
     });
     EventBus.on("RADIANT_HQ_DESTROYED", () => {
       state2.phase = "defeat" /* Defeat */;
@@ -1159,6 +1199,7 @@
       state2.economy.passiveTimer -= 1;
       state2.hero.lohn += state2.hero.passiveLohnRate;
     }
+    if (state2.stageBannerTimer > 0) state2.stageBannerTimer -= dt;
     if (state2.hero.hp <= 0 && state2.hero.alive) {
       state2.hero.alive = false;
       state2.hero.attackTarget = null;
@@ -1260,7 +1301,7 @@
     return { x: along * 0.3, y: along * 0.3 };
   }
   function spawnOne(state2, team, variant, offset, waveNumber) {
-    const creep = createCreep(team, variant, offset, waveNumber);
+    const creep = createCreep(team, variant, offset, waveNumber, state2.stage);
     if (team === "radiant" /* Radiant */) {
       state2.radiantCreeps.push(creep);
     } else {
@@ -1503,7 +1544,7 @@
     ctx2.fillStyle = COL.text;
     ctx2.textAlign = "right";
     ctx2.font = "13px monospace";
-    const waveText = `Welle ${state2.wave.waveNumber}`;
+    const waveText = `Akt ${state2.stage}/6  \u2022  Welle ${state2.wave.waveNumber}`;
     ctx2.fillText(waveText, CANVAS_W - 120, 12);
     ctx2.fillStyle = COL.dimText;
     ctx2.font = "11px monospace";
@@ -1972,7 +2013,9 @@
       victoryTime: 0,
       logoImage: null,
       respawnTimer: 0,
-      deathCount: 0
+      deathCount: 0,
+      stage: 1,
+      stageBannerTimer: 0
     };
     EventBus.clear();
     initEconomyListeners(state2);
@@ -1998,6 +2041,8 @@
     state2.phase = "ingame" /* InGame */;
     state2.respawnTimer = 0;
     state2.deathCount = 0;
+    state2.stage = 1;
+    state2.stageBannerTimer = 0;
     EventBus.clear();
     initEconomyListeners(state2);
   }
@@ -2056,8 +2101,30 @@
     if (state2.respawnTimer > 0 && !state2.hero.alive) {
       renderRespawnOverlay(ctx2, state2);
     }
+    if (state2.stageBannerTimer > 0) {
+      renderStageBanner(ctx2, state2);
+    }
     if (state2.phase === "victory" /* Victory */) renderVictory(ctx2, state2);
     if (state2.phase === "defeat" /* Defeat */) renderDefeat(ctx2, state2);
+  }
+  function renderStageBanner(ctx2, state2) {
+    const t = state2.stageBannerTimer;
+    const alpha = t > 4 ? 5 - t : t > 1 ? 1 : t;
+    ctx2.save();
+    ctx2.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx2.fillStyle = "rgba(0,0,0,0.7)";
+    ctx2.fillRect(0, CANVAS_H / 2 - 80, CANVAS_W, 160);
+    ctx2.fillStyle = "#FFD700";
+    ctx2.font = "bold 42px monospace";
+    ctx2.textAlign = "center";
+    ctx2.fillText(`AKT ${state2.stage} / 6`, CANVAS_W / 2, CANVAS_H / 2 - 10);
+    ctx2.fillStyle = "#FF7043";
+    ctx2.font = "bold 18px monospace";
+    ctx2.fillText("Die Direktion verst\xE4rkt sich!", CANVAS_W / 2, CANVAS_H / 2 + 25);
+    ctx2.fillStyle = "#FFFFFF";
+    ctx2.font = "14px monospace";
+    ctx2.fillText("Volles Leben + Akt-Bonus erhalten", CANVAS_W / 2, CANVAS_H / 2 + 55);
+    ctx2.restore();
   }
   function renderCreep(ctx2, creep) {
     const { pos, radius, team, variant, alive, isLastHitWindow, slowTimer } = creep;

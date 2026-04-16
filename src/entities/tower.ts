@@ -14,7 +14,8 @@ function makeTower(
   tier: TowerTier,
   label: string,
   pos: { x: number; y: number },
-  isAncient = false
+  isAncient = false,
+  stage = 1
 ): Tower {
   const tierStats: Record<TowerTier, { hp: number; dmg: number; range: number; cd: number; bounty: number }> = {
     1: { hp: 1200, dmg: 55,  range: 550, cd: 1.1, bounty: 150 },
@@ -23,16 +24,25 @@ function makeTower(
     4: { hp: 4000, dmg: 110, range: 620, cd: 0.95, bounty: 400 },
   };
   const s = tierStats[tier];
+
+  // Dire-Towers werden pro Akt deutlich stärker; Radiant unverändert
+  const hpMult  = team === Team.Dire ? 1 + (stage - 1) * 0.50 : 1;
+  const dmgMult = team === Team.Dire ? 1 + (stage - 1) * 0.30 : 1;
+  const bountyMult = team === Team.Dire ? 1 + (stage - 1) * 0.40 : 1;
+  const hp  = Math.round(s.hp * hpMult);
+  const dmg = Math.round(s.dmg * dmgMult);
+  const bounty = Math.round(s.bounty * bountyMult);
+
   return {
     id:   uniqueId(`tower_${team}_t${tier}`),
     type: isAncient ? EntityType.Ancient : EntityType.Tower,
     team,
     pos:  { ...pos },
     radius: isAncient ? 55 : 38,
-    hp:    s.hp, maxHp: s.hp, hpRegen: 0,
+    hp, maxHp: hp, hpRegen: 0,
     alive: true, markedForDeletion: false, destroyed: false,
 
-    attackDamage:   s.dmg,
+    attackDamage:   dmg,
     attackRange:    s.range,
     attackCooldown: s.cd,
     attackTimer:    0,
@@ -42,29 +52,40 @@ function makeTower(
 
     tier,
     label,
-    lohnBounty: s.bounty,
-    xpBounty:   Math.round(s.bounty * 0.5),
+    lohnBounty: bounty,
+    xpBounty:   Math.round(bounty * 0.5),
     aggroCheckTimer: 0,
     attackFlashTimer: 0,
   };
 }
 
-export function createAllTowers(): { radiantTowers: Tower[]; direTowers: Tower[] } {
+export function createAllTowers(stage: number = 1): { radiantTowers: Tower[]; direTowers: Tower[] } {
   const p = TOWER_POSITIONS;
   return {
     radiantTowers: [
-      makeTower(Team.Radiant, 1, "HR-Abt. T1",      p.radiant.t1),
-      makeTower(Team.Radiant, 2, "Finance T2",       p.radiant.t2),
-      makeTower(Team.Radiant, 3, "IT-Kern T3",       p.radiant.t3),
-      makeTower(Team.Radiant, 4, "Unternehmens-HQ",  p.radiant.hq, true),
+      makeTower(Team.Radiant, 1, "HR-Abt. T1",      p.radiant.t1, false, stage),
+      makeTower(Team.Radiant, 2, "Finance T2",       p.radiant.t2, false, stage),
+      makeTower(Team.Radiant, 3, "IT-Kern T3",       p.radiant.t3, false, stage),
+      makeTower(Team.Radiant, 4, "Unternehmens-HQ",  p.radiant.hq, true,  stage),
     ],
     direTowers: [
-      makeTower(Team.Dire, 1, "Kontroll-T1",        p.dire.t1),
-      makeTower(Team.Dire, 2, "Chaos-T2",           p.dire.t2),
-      makeTower(Team.Dire, 3, "Bürokratie-T3",      p.dire.t3),
-      makeTower(Team.Dire, 4, "Direktionszentrale", p.dire.ancient, true),
+      makeTower(Team.Dire, 1, "Kontroll-T1",        p.dire.t1,      false, stage),
+      makeTower(Team.Dire, 2, "Chaos-T2",           p.dire.t2,      false, stage),
+      makeTower(Team.Dire, 3, "Bürokratie-T3",      p.dire.t3,      false, stage),
+      makeTower(Team.Dire, 4, "Direktionszentrale", p.dire.ancient, true,  stage),
     ],
   };
+}
+
+// Nur Dire-Towers für nächsten Akt neu aufbauen (Radiant bleibt erhalten)
+export function rebuildDireTowers(stage: number): Tower[] {
+  const p = TOWER_POSITIONS;
+  return [
+    makeTower(Team.Dire, 1, "Kontroll-T1",        p.dire.t1,      false, stage),
+    makeTower(Team.Dire, 2, "Chaos-T2",           p.dire.t2,      false, stage),
+    makeTower(Team.Dire, 3, "Bürokratie-T3",      p.dire.t3,      false, stage),
+    makeTower(Team.Dire, 4, "Direktionszentrale", p.dire.ancient, true,  stage),
+  ];
 }
 
 // ── Update ────────────────────────────────────────────────────────────────────

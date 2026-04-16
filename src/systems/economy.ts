@@ -6,11 +6,13 @@ import { GameState, AbilityId, GamePhase } from "../types";
 import { EventBus } from "../eventbus";
 import { uniqueId } from "../map";
 import { heroLevelUp, HERO_SPAWN_POS } from "../entities/hero";
+import { rebuildDireTowers } from "../entities/tower";
 import { ABILITY_STATS } from "../constants";
 
 const RESPAWN_BASE_TIME = 5;    // Sekunden bei Level 1
 const RESPAWN_PER_LEVEL = 2;    // +2s pro Level
 const DEATH_GOLD_LOSS   = 0.15; // 15% Gold-Verlust beim Tod
+export const MAX_STAGE  = 6;    // Akt 1 (Start) + 5 weitere Akte
 
 export function initEconomyListeners(state: GameState): void {
   // LAST_HIT → Lohn + XP + Float
@@ -58,10 +60,34 @@ export function initEconomyListeners(state: GameState): void {
     if (xpBounty > 0) addXp(state, xpBounty);
   });
 
-  // ANCIENT_DESTROYED → Sieg
+  // ANCIENT_DESTROYED → Akt-Wechsel oder Endgegner-Sieg
   EventBus.on("ANCIENT_DESTROYED", () => {
-    state.phase = GamePhase.Victory;
-    state.victoryTime = state.totalTime;
+    if (state.stage >= MAX_STAGE) {
+      // Letzter Akt geschafft → Endgegner besiegt
+      state.phase = GamePhase.Victory;
+      state.victoryTime = state.totalTime;
+      return;
+    }
+    // Nächster Akt: Dire-Seite neu aufbauen, stärker als zuvor
+    state.stage++;
+    state.direTowers = rebuildDireTowers(state.stage);
+    state.direCreeps = [];   // alte Dire-Welle aufräumen
+    state.projectiles = state.projectiles.filter(p => p.kind !== "tower_bolt" && p.kind !== "creep_ranged");
+    state.wave.nextWaveTimer = 8;   // kurze Verschnaufpause
+    state.stageBannerTimer = 5;     // 5s Banner einblenden
+
+    // Hero-Belohnung für geschafften Akt: heilen + Lohn-Bonus
+    state.hero.hp = state.hero.maxHp;
+    const stageReward = 500 * state.stage;
+    state.hero.lohn += stageReward;
+
+    state.floatingTexts.push({
+      id: uniqueId("ft"),
+      pos: { x: state.hero.pos.x, y: state.hero.pos.y - 60 },
+      text: `+${stageReward} ₲ Akt-Bonus!`,
+      color: "#FFD700",
+      alpha: 1, vy: -90, life: 2.5, size: 22,
+    });
   });
 
   // RADIANT_HQ_DESTROYED → Niederlage
@@ -96,6 +122,9 @@ export function updateEconomy(state: GameState, dt: number): void {
     state.economy.passiveTimer -= 1.0;
     state.hero.lohn += state.hero.passiveLohnRate;
   }
+
+  // Akt-Banner Countdown
+  if (state.stageBannerTimer > 0) state.stageBannerTimer -= dt;
 
   // Hero Tod prüfen
   if (state.hero.hp <= 0 && state.hero.alive) {
