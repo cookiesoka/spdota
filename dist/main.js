@@ -337,7 +337,7 @@
         {
           id: "R" /* PayrollRun */,
           name: "Payroll Run",
-          description: "AoE 450px: 350 DMG, doppelter Lohn f\xFCr alle Kills",
+          description: "AoE 450px Riesenschaden (ab Lv 6)",
           cooldownMax: [120, 100, 80],
           timer: 0,
           state: "ready" /* Ready */,
@@ -1301,14 +1301,35 @@
   }
   function tryLevelAbility(state2, abilityId) {
     const hero = state2.hero;
-    if (hero.skillPoints <= 0) return;
+    if (hero.skillPoints <= 0) {
+      spawnLevelHint(state2, "Keine Skillpunkte verf\xFCgbar", "#FFB300");
+      return;
+    }
     const ability = hero.abilities.find((a) => a.id === abilityId);
     if (!ability) return;
     const maxLevel = abilityId === "R" /* PayrollRun */ ? 3 : 4;
-    if (ability.level >= maxLevel) return;
-    if (abilityId === "R" /* PayrollRun */ && hero.level < 6) return;
+    if (ability.level >= maxLevel) {
+      spawnLevelHint(state2, `${ability.name} bereits maximal`, "#FFB300");
+      return;
+    }
+    if (abilityId === "R" /* PayrollRun */ && hero.level < 6) {
+      spawnLevelHint(state2, `Payroll Run erst ab Level 6 (aktuell ${hero.level})`, "#FF5722");
+      return;
+    }
     ability.level++;
     hero.skillPoints--;
+  }
+  function spawnLevelHint(state2, text, color) {
+    state2.floatingTexts.push({
+      id: uniqueId("ft"),
+      pos: { x: state2.hero.pos.x, y: state2.hero.pos.y - 60 },
+      text,
+      color,
+      alpha: 1,
+      vy: -50,
+      life: 2,
+      size: 16
+    });
   }
   function activateZeitbuchung(state2, ability) {
     const hero = state2.hero;
@@ -1497,7 +1518,7 @@
       ctx2.fillStyle = "#FFD700";
       ctx2.font = "bold 13px monospace";
       ctx2.textAlign = "center";
-      ctx2.fillText(`\u2B06 ${hero.skillPoints} Skillpunkte verf\xFCgbar (STRG+Q/W/E/R)`, CANVAS_W / 2, 52);
+      ctx2.fillText(`\u2B06 ${hero.skillPoints} Skillpunkte verf\xFCgbar (SHIFT+Q/W/E/R)`, CANVAS_W / 2, 52);
     }
     const barY = CANVAS_H - 80;
     ctx2.fillStyle = COL.panel;
@@ -1656,7 +1677,7 @@
       ["Rechtsklick", "Bewegen / Angriff"],
       ["Pfeiltasten", "Held bewegen"],
       ["Q / W / E / R", "Faehigkeit nutzen"],
-      ["STRG+Q/W/E/R", "Faehigkeit leveln"],
+      ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
       ["B", "Kantine oeffnen"],
       ["ESC", "Kantine schliessen"]
     ];
@@ -2181,7 +2202,7 @@
     ctx2.font = "11px monospace";
     const controlY = 520;
     ctx2.fillText("Rechtsklick: Bewegen / Angreifen  |  Q/W/E/R: F\xE4higkeiten  |  B: Kantine", CANVAS_W / 2, controlY);
-    ctx2.fillText("STRG+Q/W/E/R: F\xE4higkeit leveln  |  Ziel: Dire Direktionszentrale zerst\xF6ren!", CANVAS_W / 2, controlY + 18);
+    ctx2.fillText("SHIFT+Q/W/E/R: F\xE4higkeit leveln  |  Ziel: Dire Direktionszentrale zerst\xF6ren!", CANVAS_W / 2, controlY + 18);
   }
   function renderVictory(ctx2, state2) {
     ctx2.fillStyle = "rgba(0,30,0,0.85)";
@@ -2339,7 +2360,7 @@
       e.preventDefault();
       return;
     }
-    if (e.ctrlKey || e.metaKey) {
+    if (e.shiftKey) {
       if (ABILITY_KEYS[key]) {
         tryLevelAbility(state, ABILITY_KEYS[key]);
         e.preventDefault();

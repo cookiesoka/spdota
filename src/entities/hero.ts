@@ -83,7 +83,7 @@ export function createHero(): Hero {
       {
         id: AbilityId.PayrollRun,
         name: "Payroll Run",
-        description: "AoE 450px: 350 DMG, doppelter Lohn für alle Kills",
+        description: "AoE 450px Riesenschaden (ab Lv 6)",
         cooldownMax: [120, 100, 80],
         timer: 0, state: AbilityState.Ready, level: 0, isPassive: false,
       },

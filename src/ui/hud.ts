@@ -91,7 +91,7 @@ export function renderHUD(ctx: CanvasRenderingContext2D, state: GameState): void
     ctx.fillStyle = "#FFD700";
     ctx.font = "bold 13px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`⬆ ${hero.skillPoints} Skillpunkte verfügbar (STRG+Q/W/E/R)`, CANVAS_W / 2, 52);
+    ctx.fillText(`⬆ ${hero.skillPoints} Skillpunkte verfügbar (SHIFT+Q/W/E/R)`, CANVAS_W / 2, 52);
   }
 
   // ── Untere Leiste: HP-Bar + Fähigkeiten ─────────────────────────────────────
@@ -297,7 +297,7 @@ function renderInfoPanel(ctx: CanvasRenderingContext2D, state: GameState): void 
     ["Rechtsklick", "Bewegen / Angriff"],
     ["Pfeiltasten", "Held bewegen"],
     ["Q / W / E / R", "Faehigkeit nutzen"],
-    ["STRG+Q/W/E/R", "Faehigkeit leveln"],
+    ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
     ["B", "Kantine oeffnen"],
     ["ESC", "Kantine schliessen"],
   ];

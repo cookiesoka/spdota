@@ -427,7 +427,7 @@ function renderMainMenu(ctx: CanvasRenderingContext2D, state: GameState): void {
   ctx.font = "11px monospace";
   const controlY = 520;
   ctx.fillText("Rechtsklick: Bewegen / Angreifen  |  Q/W/E/R: Fähigkeiten  |  B: Kantine", CANVAS_W / 2, controlY);
-  ctx.fillText("STRG+Q/W/E/R: Fähigkeit leveln  |  Ziel: Dire Direktionszentrale zerstören!", CANVAS_W / 2, controlY + 18);
+  ctx.fillText("SHIFT+Q/W/E/R: Fähigkeit leveln  |  Ziel: Dire Direktionszentrale zerstören!", CANVAS_W / 2, controlY + 18);
 }
 
 // ── Victory-Overlay ───────────────────────────────────────────────────────────

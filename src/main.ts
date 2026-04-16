@@ -122,8 +122,8 @@ window.addEventListener("keydown", (e) => {
     return;
   }
 
-  // STRG+Taste → Fähigkeit leveln
-  if (e.ctrlKey || e.metaKey) {
+  // SHIFT+Taste → Fähigkeit leveln
+  if (e.shiftKey) {
     if (ABILITY_KEYS[key]) {
       tryLevelAbility(state, ABILITY_KEYS[key]);
       e.preventDefault();

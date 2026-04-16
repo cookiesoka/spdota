@@ -43,20 +43,39 @@ export function tryUseAbility(state: GameState, abilityId: AbilityId): void {
 
 export function tryLevelAbility(state: GameState, abilityId: AbilityId): void {
   const hero = state.hero;
-  if (hero.skillPoints <= 0) return;
+  if (hero.skillPoints <= 0) {
+    spawnLevelHint(state, "Keine Skillpunkte verfügbar", "#FFB300");
+    return;
+  }
 
   const ability = hero.abilities.find(a => a.id === abilityId);
   if (!ability) return;
 
   // Payroll Run maximal Level 3, andere maximal 4
   const maxLevel = abilityId === AbilityId.PayrollRun ? 3 : 4;
-  if (ability.level >= maxLevel) return;
+  if (ability.level >= maxLevel) {
+    spawnLevelHint(state, `${ability.name} bereits maximal`, "#FFB300");
+    return;
+  }
 
   // Payroll Run erst ab Hero Level 6
-  if (abilityId === AbilityId.PayrollRun && hero.level < 6) return;
+  if (abilityId === AbilityId.PayrollRun && hero.level < 6) {
+    spawnLevelHint(state, `Payroll Run erst ab Level 6 (aktuell ${hero.level})`, "#FF5722");
+    return;
+  }
 
   ability.level++;
   hero.skillPoints--;
+}
+
+function spawnLevelHint(state: GameState, text: string, color: string): void {
+  state.floatingTexts.push({
+    id: uniqueId("ft"),
+    pos: { x: state.hero.pos.x, y: state.hero.pos.y - 60 },
+    text,
+    color,
+    alpha: 1, vy: -50, life: 2.0, size: 16,
+  });
 }
 
 // ── Q: Zeitbuchung ────────────────────────────────────────────────────────────
