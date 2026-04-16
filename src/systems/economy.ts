@@ -71,7 +71,9 @@ export function initEconomyListeners(state: GameState): void {
     // Nächster Akt: Dire-Seite neu aufbauen, stärker als zuvor
     state.stage++;
     state.direTowers = rebuildDireTowers(state.stage);
-    state.direCreeps = [];   // alte Dire-Welle aufräumen
+    // Beide Wellen aufräumen, damit Radiant-Creeps nicht ins Leere laufen
+    state.direCreeps = [];
+    state.radiantCreeps = [];
     state.projectiles = state.projectiles.filter(p => p.kind !== "tower_bolt" && p.kind !== "creep_ranged");
     state.wave.nextWaveTimer = 8;   // kurze Verschnaufpause
     state.stageBannerTimer = 5;     // 5s Banner einblenden

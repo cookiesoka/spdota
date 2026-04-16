@@ -102,6 +102,13 @@ window.addEventListener("keydown", (e) => {
 
   if (state.phase !== GamePhase.InGame) return;
 
+  // Pause-Toggle (Leertaste)
+  if (key === " " || e.code === "Space") {
+    state.paused = !state.paused;
+    e.preventDefault();
+    return;
+  }
+
   // Info-Panel Toggle
   if (key === "H") {
     toggleInfoPanel();

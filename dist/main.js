@@ -1155,6 +1155,7 @@
       state2.stage++;
       state2.direTowers = rebuildDireTowers(state2.stage);
       state2.direCreeps = [];
+      state2.radiantCreeps = [];
       state2.projectiles = state2.projectiles.filter((p) => p.kind !== "tower_bolt" && p.kind !== "creep_ranged");
       state2.wave.nextWaveTimer = 8;
       state2.stageBannerTimer = 5;
@@ -1720,7 +1721,8 @@
       ["Q / W / E / R", "Faehigkeit nutzen"],
       ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
       ["B", "Kantine oeffnen"],
-      ["ESC", "Kantine schliessen"]
+      ["ESC", "Kantine schliessen"],
+      ["LEERTASTE", "Pause"]
     ];
     for (const [key, desc] of controls) {
       ctx2.fillStyle = "#AAAAAA";
@@ -2015,7 +2017,8 @@
       respawnTimer: 0,
       deathCount: 0,
       stage: 1,
-      stageBannerTimer: 0
+      stageBannerTimer: 0,
+      paused: false
     };
     EventBus.clear();
     initEconomyListeners(state2);
@@ -2043,11 +2046,17 @@
     state2.deathCount = 0;
     state2.stage = 1;
     state2.stageBannerTimer = 0;
+    state2.paused = false;
     EventBus.clear();
     initEconomyListeners(state2);
   }
   function update(state2, dt) {
     if (state2.phase !== "ingame" /* InGame */) return;
+    if (state2.paused) {
+      state2.input.rightClickFired = false;
+      state2.input.leftClickFired = false;
+      return;
+    }
     state2.totalTime += dt;
     updateWaves(state2, dt);
     updateEconomy(state2, dt);
@@ -2104,8 +2113,24 @@
     if (state2.stageBannerTimer > 0) {
       renderStageBanner(ctx2, state2);
     }
+    if (state2.paused && state2.phase === "ingame" /* InGame */) {
+      renderPauseOverlay(ctx2);
+    }
     if (state2.phase === "victory" /* Victory */) renderVictory(ctx2, state2);
     if (state2.phase === "defeat" /* Defeat */) renderDefeat(ctx2, state2);
+  }
+  function renderPauseOverlay(ctx2) {
+    ctx2.save();
+    ctx2.fillStyle = "rgba(0,0,0,0.55)";
+    ctx2.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx2.fillStyle = "#FFD700";
+    ctx2.font = "bold 56px monospace";
+    ctx2.textAlign = "center";
+    ctx2.fillText("\u23F8  PAUSE", CANVAS_W / 2, CANVAS_H / 2 - 10);
+    ctx2.fillStyle = "#FFFFFF";
+    ctx2.font = "16px monospace";
+    ctx2.fillText("Leertaste dr\xFCcken zum Fortsetzen", CANVAS_W / 2, CANVAS_H / 2 + 30);
+    ctx2.restore();
   }
   function renderStageBanner(ctx2, state2) {
     const t = state2.stageBannerTimer;
@@ -2412,6 +2437,11 @@
     const key = e.key.toUpperCase();
     state.input.keys.add(key);
     if (state.phase !== "ingame" /* InGame */) return;
+    if (key === " " || e.code === "Space") {
+      state.paused = !state.paused;
+      e.preventDefault();
+      return;
+    }
     if (key === "H") {
       toggleInfoPanel();
       e.preventDefault();

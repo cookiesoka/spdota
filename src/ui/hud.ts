@@ -300,6 +300,7 @@ function renderInfoPanel(ctx: CanvasRenderingContext2D, state: GameState): void 
     ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
     ["B", "Kantine oeffnen"],
     ["ESC", "Kantine schliessen"],
+    ["LEERTASTE", "Pause"],
   ];
 
   for (const [key, desc] of controls) {

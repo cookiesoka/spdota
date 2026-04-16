@@ -286,4 +286,5 @@ export interface GameState {
   deathCount:     number;
   stage:          number;       // Aktueller Akt (1 = Start, MAX_STAGE = Endgegner)
   stageBannerTimer: number;     // Sek. wie lange der Akt-Banner noch sichtbar ist
+  paused:         boolean;      // Spiel pausiert (Leertaste)
 }

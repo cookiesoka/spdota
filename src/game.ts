@@ -71,6 +71,7 @@ export function createGameState(canvas: HTMLCanvasElement, ctx: CanvasRenderingC
     deathCount:   0,
     stage:        1,
     stageBannerTimer: 0,
+    paused:       false,
   };
 
   // Event-Listener
@@ -103,6 +104,7 @@ export function resetForNewGame(state: GameState): void {
   state.deathCount     = 0;
   state.stage          = 1;
   state.stageBannerTimer = 0;
+  state.paused         = false;
 
   EventBus.clear();
   initEconomyListeners(state);
@@ -112,6 +114,12 @@ export function resetForNewGame(state: GameState): void {
 
 export function update(state: GameState, dt: number): void {
   if (state.phase !== GamePhase.InGame) return;
+  if (state.paused) {
+    // Input-Flags trotzdem zurücksetzen, damit kein Klick "hängen" bleibt
+    state.input.rightClickFired = false;
+    state.input.leftClickFired  = false;
+    return;
+  }
 
   state.totalTime += dt;
 
@@ -235,9 +243,30 @@ export function render(state: GameState): void {
     renderStageBanner(ctx, state);
   }
 
+  // 10c. Pause-Overlay
+  if (state.paused && state.phase === GamePhase.InGame) {
+    renderPauseOverlay(ctx);
+  }
+
   // 11. Victory/Defeat
   if (state.phase === GamePhase.Victory)  renderVictory(ctx, state);
   if (state.phase === GamePhase.Defeat)   renderDefeat(ctx, state);
+}
+
+function renderPauseOverlay(ctx: CanvasRenderingContext2D): void {
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  ctx.fillStyle = "#FFD700";
+  ctx.font = "bold 56px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("⏸  PAUSE", CANVAS_W / 2, CANVAS_H / 2 - 10);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "16px monospace";
+  ctx.fillText("Leertaste drücken zum Fortsetzen", CANVAS_W / 2, CANVAS_H / 2 + 30);
+  ctx.restore();
 }
 
 function renderStageBanner(ctx: CanvasRenderingContext2D, state: GameState): void {
