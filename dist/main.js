@@ -754,21 +754,20 @@
     };
   }
   function createAllTowers(stage = 1) {
-    const p = TOWER_POSITIONS;
     return {
-      radiantTowers: [
-        makeTower("radiant" /* Radiant */, 1, "HR-Abt. T1", p.radiant.t1, false, stage),
-        makeTower("radiant" /* Radiant */, 2, "Finance T2", p.radiant.t2, false, stage),
-        makeTower("radiant" /* Radiant */, 3, "IT-Kern T3", p.radiant.t3, false, stage),
-        makeTower("radiant" /* Radiant */, 4, "Unternehmens-HQ", p.radiant.hq, true, stage)
-      ],
-      direTowers: [
-        makeTower("dire" /* Dire */, 1, "Kontroll-T1", p.dire.t1, false, stage),
-        makeTower("dire" /* Dire */, 2, "Chaos-T2", p.dire.t2, false, stage),
-        makeTower("dire" /* Dire */, 3, "B\xFCrokratie-T3", p.dire.t3, false, stage),
-        makeTower("dire" /* Dire */, 4, "Direktionszentrale", p.dire.ancient, true, stage)
-      ]
+      radiantTowers: rebuildRadiantTowers(stage)
+      ,
+      direTowers: rebuildDireTowers(stage)
     };
+  }
+  function rebuildRadiantTowers(stage) {
+    const p = TOWER_POSITIONS;
+    return [
+      makeTower("radiant" /* Radiant */, 1, "HR-Abt. T1", p.radiant.t1, false, stage),
+      makeTower("radiant" /* Radiant */, 2, "Finance T2", p.radiant.t2, false, stage),
+      makeTower("radiant" /* Radiant */, 3, "IT-Kern T3", p.radiant.t3, false, stage),
+      makeTower("radiant" /* Radiant */, 4, "Unternehmens-HQ", p.radiant.hq, true, stage)
+    ];
   }
   function rebuildDireTowers(stage) {
     const p = TOWER_POSITIONS;
