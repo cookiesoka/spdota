@@ -343,6 +343,16 @@
           state: "ready" /* Ready */,
           level: 0,
           isPassive: false
+        },
+        {
+          id: "M" /* Monatsabschluss */,
+          name: "Monatsabschluss",
+          description: "Heilung (ab Lv 10)",
+          cooldownMax: [50, 30, 10],
+          timer: 0,
+          state: "ready" /* Ready */,
+          level: 0,
+          isPassive: false
         }
       ],
       items: SHOP_ITEMS.map((i) => ({ ...i })),
@@ -914,6 +924,10 @@
     },
     gehaltserh\u00F6hung: {
       bonusPerLevel: [18, 24, 30, 36]
+    },
+    monatsabschluss: {
+      radius: [200, 400, 600],
+      healing: [100, 200, 400]
     }
   };
 
@@ -988,6 +1002,7 @@
       }
     }
   }
+
   function fireHeroAttack(hero, target, state2) {
     let kind = "hero_basic";
     let damage = hero.attackDamage;
@@ -1002,6 +1017,7 @@
     proj.isLastHit = true;
     state2.projectiles.push(proj);
   }
+
   function executePayrollRun(state2) {
     const hero = state2.hero;
     const RADIUS = ABILITY_STATS.payrollRun.radius;
@@ -1014,6 +1030,7 @@
       color: "#FFD700",
       kind: "ring"
     });
+
     const abilityLevel = hero.abilities.find((a) => a.id === "R" /* PayrollRun */)?.level ?? 1;
     const dmg = ABILITY_STATS.payrollRun.damage[Math.min(abilityLevel - 1, 2)];
     for (const creep of state2.direCreeps) {
@@ -1059,6 +1076,67 @@
       }
     }
   }
+
+  // Does a month-end closing and heals friendly units
+  function executeMonatsabschluss(state2) {
+    const hero = state2.hero;
+    const RADIUS = ABILITY_STATS.monatsAbschluss.radius;
+    state2.aoeEffects.push({
+      id: uniqueId("aoe"),
+      pos: { ...hero.pos },
+      radius: RADIUS,
+      maxLife: 1,
+      life: 1,
+      color: "#39D700",
+      kind: "ring"
+    });
+	
+    const abilityLevel = hero.abilities.find((a) => a.id === "M" /* Monatsabschluss */)?.level ?? 1;
+    const dmg = ABILITY_STATS.monatsabschluss.damage[Math.min(abilityLevel - 1, 2)];
+    for (const creep of state2.direCreeps) {
+      if (!creep.alive) continue;
+      const d = dist(hero.pos, creep.pos);
+      if (d <= RADIUS) {
+        const armor = creep.armor ?? 0;
+        const eff = Math.max(1, dmg - armor);
+        creep.hp -= eff;
+        state2.floatingTexts.push({
+          id: uniqueId("ft"),
+          pos: { x: creep.pos.x, y: creep.pos.y - 20 },
+          text: `-${eff}`,
+          color: "#FFD700",
+          alpha: 1,
+          vy: -50,
+          life: 0.9,
+          size: 14
+        });
+        if (creep.hp <= 0) {
+          creep.hp = 0;
+          creep.alive = false;
+          creep.markedForDeletion = true;
+          const lohn = creep.lohnBounty * 2;
+          EventBus.emit("LAST_HIT", { lohn, xp: creep.xpBounty });
+        }
+      }
+    }
+    for (const tower of state2.direTowers) {
+      if (!tower.alive || tower.destroyed) continue;
+      if (dist(hero.pos, tower.pos) <= RADIUS) {
+        tower.hp -= Math.round(dmg * 0.5);
+        if (tower.hp <= 0) {
+          tower.hp = 0;
+          tower.alive = false;
+          tower.destroyed = true;
+          tower.markedForDeletion = true;
+          EventBus.emit("TOWER_DESTROYED", { tower, lohn: tower.lohnBounty, xp: tower.xpBounty });
+          if (tower.type === "ancient" /* Ancient */) {
+            EventBus.emit("ANCIENT_DESTROYED", {});
+          }
+        }
+      }
+    }
+  }
+  
   function handleHeroRightClick(state2) {
     const hero = state2.hero;
     const { mouseWorld } = state2.input;
@@ -1323,6 +1401,7 @@
       }
     }
   }
+
   function tryUseAbility(state2, abilityId) {
     const hero = state2.hero;
     const ability = hero.abilities.find((a) => a.id === abilityId);
@@ -1338,16 +1417,22 @@
       case "R" /* PayrollRun */:
         activatePayrollRun(state2, ability);
         break;
+      case "M" /* Monatsabschluss */:
+        activateMonatsabschluss(state2, ability);
+        break;
     }
   }
+
   function tryLevelAbility(state2, abilityId) {
     const hero = state2.hero;
     if (hero.skillPoints <= 0) {
       spawnLevelHint(state2, "Keine Skillpunkte verf\xFCgbar", "#FFB300");
       return;
     }
+
     const ability = hero.abilities.find((a) => a.id === abilityId);
     if (!ability) return;
+
     const maxLevel = abilityId === "R" /* PayrollRun */ ? 3 : 4;
     if (ability.level >= maxLevel) {
       spawnLevelHint(state2, `${ability.name} bereits maximal`, "#FFB300");
@@ -1357,9 +1442,15 @@
       spawnLevelHint(state2, `Payroll Run erst ab Level 6 (aktuell ${hero.level})`, "#FF5722");
       return;
     }
+    if (abilityId === "M" /* Monatsabschluss */ && hero.level < 10) {
+      spawnLevelHint(state2, `Monatsabschluss erst ab Level 10 (aktuell ${hero.level})`, "#FF5722");
+      return;
+    }
+
     ability.level++;
     hero.skillPoints--;
   }
+
   function spawnLevelHint(state2, text, color) {
     state2.floatingTexts.push({
       id: uniqueId("ft"),
@@ -1388,6 +1479,7 @@
       size: 14
     });
   }
+
   function activateUeberstunden(state2, ability) {
     const hero = state2.hero;
     const RADIUS = ABILITY_STATS.ueberstunden.radius;
@@ -1431,6 +1523,7 @@
     ability.state = "cooldown" /* OnCooldown */;
     ability.timer = ability.cooldownMax[ability.level - 1];
   }
+
   function activatePayrollRun(state2, ability) {
     const hero = state2.hero;
     hero.payrollRunActive = true;
@@ -1472,6 +1565,45 @@
       size: 26
     });
   }
+
+  function activateMonatsabschluss(state2, ability) {
+    const hero = state2.hero;
+    const RADIUS = ABILITY_STATS.monatsabschluss.radius[ability.level - 1];
+    const heal = ABILITY_STATS.monatsabschluss.healing[ability.level - 1];
+    state2.aoeEffects.push({
+      id: uniqueId("aoe"),
+      pos: { ...hero.pos },
+      radius: RADIUS,
+      maxLife: 0.6,
+      life: 0.6,
+      color: "#469800",
+      kind: "fill"
+    });
+
+    hero.ueberstundenActive = true;
+    hero.ueberstundenTimer = 0.3;
+
+    for (const creep of state2.radiantCreeps) {
+      if (!creep.alive) continue;
+      if (dist(hero.pos, creep.pos) <= RADIUS) {
+        creep.hp += heal;
+        state2.floatingTexts.push({
+          id: uniqueId("ft"),
+          pos: { x: creep.pos.x, y: creep.pos.y - 15 },
+          text: `+${heal}`,
+          color: "#5c9800",
+          alpha: 1,
+          vy: -50,
+          life: 0.7,
+          size: 14
+        });
+      }
+    }
+
+    ability.state = "cooldown" /* OnCooldown */;
+    ability.timer = ability.cooldownMax[ability.level - 1];
+  }
+ 
   function updatePayrollCoins(state2, dt) {
     for (const proj of state2.projectiles) {
       if (proj.kind !== "payroll_coin") continue;
@@ -1559,7 +1691,7 @@
       ctx2.fillStyle = "#FFD700";
       ctx2.font = "bold 13px monospace";
       ctx2.textAlign = "center";
-      ctx2.fillText(`\u2B06 ${hero.skillPoints} Skillpunkte verf\xFCgbar (SHIFT+Q/W/E/R)`, CANVAS_W / 2, 52);
+      ctx2.fillText(`\u2B06 ${hero.skillPoints} Skillpunkte verf\xFCgbar (SHIFT+Q/W/E/R/M)`, CANVAS_W / 2, 52);
     }
     const barY = CANVAS_H - 80;
     ctx2.fillStyle = COL.panel;
@@ -1596,8 +1728,8 @@
     const abilityGap = 6;
     const totalW = 4 * abilitySize + 3 * abilityGap;
     const startX = CANVAS_W / 2 - totalW / 2;
-    const abilityKeys = ["Q", "W", "E", "R"];
-    for (let i = 0; i < 4; i++) {
+    const abilityKeys = ["Q", "W", "E", "R", "M"];
+    for (let i = 0; i < hero.abilities.length; i++) {
       const ability = hero.abilities[i];
       const x = startX + i * (abilitySize + abilityGap);
       let bgColor = COL.hpBg;
@@ -1717,8 +1849,8 @@
     const controls = [
       ["Rechtsklick", "Bewegen / Angriff"],
       ["Pfeiltasten", "Held bewegen"],
-      ["Q / W / E / R", "Faehigkeit nutzen"],
-      ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
+      ["Q/W/E/R/M", "Faehigkeit nutzen"],
+      ["SHIFT+Q/W/E/R/M", "Faehigkeit leveln"],
       ["B", "Kantine oeffnen"],
       ["ESC", "Kantine schliessen"],
       ["LEERTASTE", "Pause"]
@@ -1741,7 +1873,7 @@
     ctx2.font = "bold 11px monospace";
     ctx2.fillText("FAEHIGKEITEN", x, y);
     y += lineH + 4;
-    const abilityKeys = ["Q", "W", "E", "R"];
+    const abilityKeys = ["Q", "W", "E", "R", "M"];
     for (let i = 0; i < hero.abilities.length; i++) {
       const ability = hero.abilities[i];
       const key = abilityKeys[i];
@@ -2292,8 +2424,8 @@
     ctx2.fillStyle = "#555";
     ctx2.font = "11px monospace";
     const controlY = 520;
-    ctx2.fillText("Rechtsklick: Bewegen / Angreifen  |  Q/W/E/R: F\xE4higkeiten  |  B: Kantine", CANVAS_W / 2, controlY);
-    ctx2.fillText("SHIFT+Q/W/E/R: F\xE4higkeit leveln  |  Ziel: Dire Direktionszentrale zerst\xF6ren!", CANVAS_W / 2, controlY + 18);
+    ctx2.fillText("Rechtsklick: Bewegen / Angreifen  |  Q/W/E/R/M: F\xE4higkeiten  |  B: Kantine", CANVAS_W / 2, controlY);
+    ctx2.fillText("SHIFT+Q/W/E/R/M: F\xE4higkeit leveln  |  Ziel: Dire Direktionszentrale zerst\xF6ren!", CANVAS_W / 2, controlY + 18);
   }
   function renderVictory(ctx2, state2) {
     ctx2.fillStyle = "rgba(0,30,0,0.85)";
@@ -2383,7 +2515,8 @@
     "Q": "Q" /* Zeitbuchung */,
     "W": "W" /* Ueberstunden */,
     "E": "E" /* Gehaltserhöhung */,
-    "R": "R" /* PayrollRun */
+    "R": "R" /* PayrollRun */,
+    "M": "M" /* Monatsabschluss */
   };
   function updateMousePos(e) {
     const rect = canvas.getBoundingClientRect();
