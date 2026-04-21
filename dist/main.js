@@ -1077,66 +1077,6 @@
     }
   }
 
-  // Does a month-end closing and heals friendly units
-  function executeMonatsabschluss(state2) {
-    const hero = state2.hero;
-    const RADIUS = ABILITY_STATS.monatsAbschluss.radius;
-    state2.aoeEffects.push({
-      id: uniqueId("aoe"),
-      pos: { ...hero.pos },
-      radius: RADIUS,
-      maxLife: 1,
-      life: 1,
-      color: "#39D700",
-      kind: "ring"
-    });
-	
-    const abilityLevel = hero.abilities.find((a) => a.id === "M" /* Monatsabschluss */)?.level ?? 1;
-    const dmg = ABILITY_STATS.monatsabschluss.damage[Math.min(abilityLevel - 1, 2)];
-    for (const creep of state2.direCreeps) {
-      if (!creep.alive) continue;
-      const d = dist(hero.pos, creep.pos);
-      if (d <= RADIUS) {
-        const armor = creep.armor ?? 0;
-        const eff = Math.max(1, dmg - armor);
-        creep.hp -= eff;
-        state2.floatingTexts.push({
-          id: uniqueId("ft"),
-          pos: { x: creep.pos.x, y: creep.pos.y - 20 },
-          text: `-${eff}`,
-          color: "#FFD700",
-          alpha: 1,
-          vy: -50,
-          life: 0.9,
-          size: 14
-        });
-        if (creep.hp <= 0) {
-          creep.hp = 0;
-          creep.alive = false;
-          creep.markedForDeletion = true;
-          const lohn = creep.lohnBounty * 2;
-          EventBus.emit("LAST_HIT", { lohn, xp: creep.xpBounty });
-        }
-      }
-    }
-    for (const tower of state2.direTowers) {
-      if (!tower.alive || tower.destroyed) continue;
-      if (dist(hero.pos, tower.pos) <= RADIUS) {
-        tower.hp -= Math.round(dmg * 0.5);
-        if (tower.hp <= 0) {
-          tower.hp = 0;
-          tower.alive = false;
-          tower.destroyed = true;
-          tower.markedForDeletion = true;
-          EventBus.emit("TOWER_DESTROYED", { tower, lohn: tower.lohnBounty, xp: tower.xpBounty });
-          if (tower.type === "ancient" /* Ancient */) {
-            EventBus.emit("ANCIENT_DESTROYED", {});
-          }
-        }
-      }
-    }
-  }
-  
   function handleHeroRightClick(state2) {
     const hero = state2.hero;
     const { mouseWorld } = state2.input;
