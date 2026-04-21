@@ -1080,7 +1080,7 @@
   // Does a month-end closing and heals friendly units
   function executeMonatsabschluss(state2) {
     const hero = state2.hero;
-    const RADIUS = ABILITY_STATS.monatsAbschluss.radius;
+    const RADIUS = ABILITY_STATS.monatsabschluss.radius;
     state2.aoeEffects.push({
       id: uniqueId("aoe"),
       pos: { ...hero.pos },
@@ -1092,7 +1092,7 @@
     });
 	
     const abilityLevel = hero.abilities.find((a) => a.id === "M" /* Monatsabschluss */)?.level ?? 1;
-    const dmg = ABILITY_STATS.monatsabschluss.damage[Math.min(abilityLevel - 1, 2)];
+    const dmg = ABILITY_STATS.monatsabschluss.healing[Math.min(abilityLevel - 1, 2)];
     for (const creep of state2.direCreeps) {
       if (!creep.alive) continue;
       const d = dist(hero.pos, creep.pos);
