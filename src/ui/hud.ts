@@ -91,7 +91,7 @@ export function renderHUD(ctx: CanvasRenderingContext2D, state: GameState): void
     ctx.fillStyle = "#FFD700";
     ctx.font = "bold 13px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(`⬆ ${hero.skillPoints} Skillpunkte verfügbar (SHIFT+Q/W/E/R)`, CANVAS_W / 2, 52);
+    ctx.fillText(`⬆ ${hero.skillPoints} Skillpunkte verfügbar (SHIFT+Q/W/E/R/M)`, CANVAS_W / 2, 52);
   }
 
   // ── Untere Leiste: HP-Bar + Fähigkeiten ─────────────────────────────────────
@@ -131,16 +131,16 @@ export function renderHUD(ctx: CanvasRenderingContext2D, state: GameState): void
   ctx.fillStyle = COL.xpBar;
   ctx.fillRect(hpBarX, xpBarY, Math.round(hpBarW * xpPct), xpBarH);
 
-  // ── Fähigkeiten-Icons (Q/W/E/R) ──────────────────────────────────────────
+  // ── Fähigkeiten-Icons (Q/W/E/R/M) ──────────────────────────────────────────
   const abilityY = barY + 42;
   const abilitySize = 34;
   const abilityGap = 6;
   const totalW = 4 * abilitySize + 3 * abilityGap;
   const startX = CANVAS_W / 2 - totalW / 2;
 
-  const abilityKeys = ["Q", "W", "E", "R"];
+  const abilityKeys = ["Q", "W", "E", "R", "M"];
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < hero.abilities.length; i++) {
     const ability = hero.abilities[i];
     const x = startX + i * (abilitySize + abilityGap);
 
@@ -296,7 +296,7 @@ function renderInfoPanel(ctx: CanvasRenderingContext2D, state: GameState): void 
   const controls = [
     ["Rechtsklick", "Bewegen / Angriff"],
     ["Pfeiltasten", "Held bewegen"],
-    ["Q / W / E / R", "Faehigkeit nutzen"],
+    ["Q/W/E/R/M", "Faehigkeit nutzen"],
     ["SHIFT+Q/W/E/R", "Faehigkeit leveln"],
     ["B", "Kantine oeffnen"],
     ["ESC", "Kantine schliessen"],
@@ -326,7 +326,7 @@ function renderInfoPanel(ctx: CanvasRenderingContext2D, state: GameState): void 
   ctx.fillText("FAEHIGKEITEN", x, y);
   y += lineH + 4;
 
-  const abilityKeys = ["Q", "W", "E", "R"];
+  const abilityKeys = ["Q", "W", "E", "R", "M"];
 
   for (let i = 0; i < hero.abilities.length; i++) {
     const ability = hero.abilities[i];

@@ -35,6 +35,7 @@ export enum AbilityId {
   Ueberstunden     = "W",
   Gehaltserhöhung  = "E",
   PayrollRun       = "R",
+  Monatsabschluss  = "M",
 }
 
 export enum AbilityState {

@@ -38,6 +38,9 @@ export function tryUseAbility(state: GameState, abilityId: AbilityId): void {
     case AbilityId.PayrollRun:
       activatePayrollRun(state, ability);
       break;
+    case AbilityId.Monatsabschluss:
+      activateMonatsabschluss(state2, ability);
+      break;
   }
 }
 
@@ -61,6 +64,11 @@ export function tryLevelAbility(state: GameState, abilityId: AbilityId): void {
   // Payroll Run erst ab Hero Level 6
   if (abilityId === AbilityId.PayrollRun && hero.level < 6) {
     spawnLevelHint(state, `Payroll Run erst ab Level 6 (aktuell ${hero.level})`, "#FF5722");
+    return;
+  }
+  
+  if (abilityId === AbilityId.Monatsabschluss && hero.level < 10) {
+    spawnLevelHint(state, `Monatsabschluss erst ab Level 10 (aktuell ${hero.level})`, "#FF5722");
     return;
   }
 
@@ -195,6 +203,44 @@ function activatePayrollRun(
     color: "#FFD700",
     alpha: 1, vy: -100, life: 2.0, size: 26,
   });
+}
+
+function activateMonatsabschluss(state2, ability) {
+  const hero = state2.hero;
+  const RADIUS = ABILITY_STATS.monatsabschluss.radius[ability.level - 1];
+  const heal = ABILITY_STATS.monatsabschluss.healing[ability.level - 1];
+  state2.aoeEffects.push({
+    id: uniqueId("aoe"),
+    pos: { ...hero.pos },
+    radius: RADIUS,
+    maxLife: 0.6,
+    life: 0.6,
+    color: "#469800",
+    kind: "fill"
+  });
+
+  hero.ueberstundenActive = true;
+  hero.ueberstundenTimer = 0.3;
+
+  for (const creep of state2.radiantCreeps) {
+    if (!creep.alive) continue;
+    if (dist(hero.pos, creep.pos) <= RADIUS) {
+      creep.hp += heal;
+      state2.floatingTexts.push({
+        id: uniqueId("ft"),
+        pos: { x: creep.pos.x, y: creep.pos.y - 15 },
+        text: `+${heal}`,
+        color: "#5c9800",
+        alpha: 1,
+        vy: -50,
+        life: 0.7,
+        size: 14
+      });
+    }
+  }
+
+  ability.state = "cooldown" /* OnCooldown */;
+  ability.timer = ability.cooldownMax[ability.level - 1];
 }
 
 // ── Update Payroll Coins (orbit around hero) ─────────────────────────────────

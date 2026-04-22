@@ -60,21 +60,20 @@ function makeTower(
 }
 
 export function createAllTowers(stage: number = 1): { radiantTowers: Tower[]; direTowers: Tower[] } {
-  const p = TOWER_POSITIONS;
   return {
-    radiantTowers: [
-      makeTower(Team.Radiant, 1, "HR-Abt. T1",      p.radiant.t1, false, stage),
-      makeTower(Team.Radiant, 2, "Finance T2",       p.radiant.t2, false, stage),
-      makeTower(Team.Radiant, 3, "IT-Kern T3",       p.radiant.t3, false, stage),
-      makeTower(Team.Radiant, 4, "Unternehmens-HQ",  p.radiant.hq, true,  stage),
-    ],
-    direTowers: [
-      makeTower(Team.Dire, 1, "Kontroll-T1",        p.dire.t1,      false, stage),
-      makeTower(Team.Dire, 2, "Chaos-T2",           p.dire.t2,      false, stage),
-      makeTower(Team.Dire, 3, "Bürokratie-T3",      p.dire.t3,      false, stage),
-      makeTower(Team.Dire, 4, "Direktionszentrale", p.dire.ancient, true,  stage),
-    ],
+    radiantTowers: rebuildRadiantTowers(stage),
+    direTowers: rebuildDireTowers(stage),
   };
+}
+
+export function rebuildRadiantTowers(stage: number): Tower[] {
+  const p = TOWER_POSITIONS;
+  return [
+    makeTower(Team.Radiant, 1, "HR-Abt. T1",       p.radiant.t1, false, stage),
+    makeTower(Team.Radiant, 2, "Finance T2",       p.radiant.t2, false, stage),
+    makeTower(Team.Radiant, 3, "IT-Kern T3",       p.radiant.t3, false, stage),
+    makeTower(Team.Radiant, 4, "Unternehmens-HQ",  p.radiant.hq, true,  stage),
+  ];
 }
 
 // Nur Dire-Towers für nächsten Akt neu aufbauen (Radiant bleibt erhalten)
