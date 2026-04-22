@@ -19,4 +19,8 @@ export const ABILITY_STATS = {
   gehaltserhöhung: {
     bonusPerLevel: [18, 24, 30, 36] as readonly number[],
   },
+  monatsabschluss: {
+    radius: [200, 400, 600] as readonly number[],
+    healing: [100, 200, 400] as readonly number[],
+  },
 } as const;

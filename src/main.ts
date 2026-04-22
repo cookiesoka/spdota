@@ -31,6 +31,7 @@ const ABILITY_KEYS: Record<string, AbilityId> = {
   "W": AbilityId.Ueberstunden,
   "E": AbilityId.Gehaltserhöhung,
   "R": AbilityId.PayrollRun,
+  "M": AbilityId.Monatsabschluss,
 };
 
 // ── Input-Handler ─────────────────────────────────────────────────────────────
@@ -138,7 +139,7 @@ window.addEventListener("keydown", (e) => {
     }
   }
 
-  // Q/W/E/R → Fähigkeit aktivieren
+  // Q/W/E/R/M → Fähigkeit aktivieren
   if (ABILITY_KEYS[key]) {
     tryUseAbility(state, ABILITY_KEYS[key]);
     e.preventDefault();
